@@ -1,5 +1,5 @@
 # Compiler and flags
-CXX = g++-14
+CXX = g++
 CPPFLAGS = -O3 -Wall -std=c++11 -I include
 
 # Directories

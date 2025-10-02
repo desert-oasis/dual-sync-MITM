@@ -27,6 +27,7 @@ void PseudoPreimage_MITM();
 
 int main(int argc, char ** argv) {
 
+    //Implementation of step 1–25 in Algorithm 2: Preimage attack on 44-step SHA-256
     PseudoPreimage_MITM();
 
     return EXIT_SUCCESS;
@@ -157,11 +158,11 @@ bool isNotInVector(int number, const std::vector<int>& vec) {
 }
 
 void FindIS(std::vector<std::vector<uint32_t>> p22, std::vector<std::vector<uint32_t>> p18){
-    int d_f=7,d_b=3;
-    uint32_t mask_forward=0x01fc0000; //W18, {18:24}
-    uint32_t mask_backward=0x00000007; //W21, {0:2}
+    int d_f=5,d_b=8;
+    uint32_t mask_forward=0xf8000000; //W18, {27:31}
+    uint32_t mask_backward=0x0000ff00; //W21, {8:15}
 
-    //According to Proposition 11 in Appendix, we obtain a valid initial structure by the following way
+    //According to Proposition 1, we obtain a valid initial structure by the following way
     uint32_t rands[8];
     generateRandomUInt32Array(rands,8);
 
@@ -174,14 +175,14 @@ void FindIS(std::vector<std::vector<uint32_t>> p22, std::vector<std::vector<uint
     uint32_t E_prime_19=0;//E'19, from Proposition 11 in Appendix
 
     for(uint32_t index_W18=0;index_W18<(1<<d_f);index_W18++){
-        W18=(index_W18<<18);
+        W18=(index_W18<<27);
         W20=sig1(W18);
         
         p19[0]=W18+rands[0];//A19
         p19[1]=rands[1];//B19
         p19[2]=rands[2];//C19
         p19[3]=rands[3];//D19
-        p19[4]=W18+E_prime_19; //E19, satisfy E19[0:2]=000
+        p19[4]=W18+E_prime_19; //E19
         p19[5]=rands[5];//F'19, actually, F19+W21
         p19[6]=rands[6];//G19
         p19[7]=rands[7];//H19
@@ -189,20 +190,20 @@ void FindIS(std::vector<std::vector<uint32_t>> p22, std::vector<std::vector<uint
         uint32_t xorE = rotr(p19[4], 6) ^ rotr(p19[4], 11) ^ rotr(p19[4], 25);
         uint32_t tmp = p19[3] + xorE + choose(p19[4],p19[5],p19[6]) + W19 + K[19];
         int value = tmp&mask_backward;
-        //set H19 such that E20[0:2]=111
+        //set H19
         p19[7] = (p19[7]&~mask_backward) | (~value);
 
         uint32_t p_tmp[8];
         for(int k=0;k<8;k++) p_tmp[k]=p19[k];
         StepFunction(p_tmp,W19,19); //p20
         StepFunction(p_tmp,W20,20); //p21
-        StepFunction(p_tmp,0x00000004,21); //p22, with W21=0x00000004;//fixed setting
+        StepFunction(p_tmp,0x00008000,21); //p22: W21, with this fixed setting
  
         for(int k=0;k<8;k++) p22[index_W18][k]=p_tmp[k];
     }
 
     for(uint32_t index_W21=0;index_W21<(1<<d_b);index_W21++){
-        W21=index_W21;
+        W21=index_W21<<8;
 
         p19[0]=rands[0];//A'19, A19-W18
         p19[1]=rands[1];//B19
@@ -216,22 +217,22 @@ void FindIS(std::vector<std::vector<uint32_t>> p22, std::vector<std::vector<uint
         uint32_t xorE = rotr(p19[4], 6) ^ rotr(p19[4], 11) ^ rotr(p19[4], 25);
         uint32_t tmp = p19[3] + xorE + choose(p19[4],(p19[5]+W21),p19[6]) + W19 + K[19];
         int value = tmp&mask_backward;
-        //set H19 such that E20[0:2]=111
+        //set H19
         p19[7] = (p19[7]&~mask_backward) | (~value);
 
         uint32_t p_tmp[8];
         for(int k=0;k<8;k++) p_tmp[k]=p19[k];
-        InvStepFunction(p_tmp,0x01000000,18); //W18=0x01000000;//fixed setting
+        InvStepFunction(p_tmp,0x80000000,18); //W18, with this fixed setting
 
         for(int k=0;k<8;k++) p18[index_W21][k]=p_tmp[k];
     }
 }
 
 void PseudoPreimage_MITM(){
-	int d_f=7,d_b=3,d_m=3;
-    uint32_t mask_forward=0x01fc0000; //W18, {18:24}
-    uint32_t mask_backward=0x00000007; //W21, {0:2}
-    uint32_t mask_match=0xe0000000; //A38, {29:31}
+	int d_f=5,d_b=8,d_m=5;
+    uint32_t mask_forward=0xf8000000; //W18, {27:31}
+    uint32_t mask_backward=0x0000ff00; //W21, {0,8:15} for simplify of impletation, use {8:15}
+    uint32_t mask_match=0x0000001f; //A37, {0:4}
 
 	//Precomputed phase, initial structure (IS)
     std::vector<std::vector<uint32_t>> p22((1<<d_f), std::vector<uint32_t>(8, 0));
@@ -240,7 +241,7 @@ void PseudoPreimage_MITM(){
 
 
 	//Online phase
-    uint32_t N_sample=1<<17; int ctr_Pr_f=0; int ctr_partial_match=0;
+    uint32_t N_sample=1<<17; int ctr_Pr_b=0; int ctr_partial_match=0;
     std::cout<<"Number of total samples: " << N_sample << std::endl;
     //For external variables of IS: W23
     uint32_t W32;
@@ -253,13 +254,12 @@ void PseudoPreimage_MITM(){
         MultiHashTable<int, int> hashTable((1<<d_f));
         std::vector<std::vector<uint32_t>> auxiTable((1<<d_f), std::vector<uint32_t>(8, 0));
         std::vector<uint32_t> auxiTableW36((1<<d_f), 0);
-        std::vector<uint32_t> auxiTableW37((1<<d_f), 0);
         std::vector<std::vector<uint32_t>> auxiTableWW((1<<d_f), std::vector<uint32_t>(6, 0));
 
         //Forward computation
         for(int i=0; i<(1<<d_f); i++){ //W18
             //message compensation
-            W[18]=i<<18;
+            W[18]=i<<27;
             W[20]=sig1(W[18]);
             W[22]=sig1(W[20]);
             W[24]=sig1(W[22]);
@@ -278,26 +278,24 @@ void PseudoPreimage_MITM(){
             }
             for(int k=0;k<8;k++) auxiTable[i][k]=p_tmp[k]; //p36
 
-            uint32_t W21=0x00000004;//fixed setting
-            uint32_t W36 = sig1(W[34]) + W[29] + sig0(W21) + W[20];
-            uint32_t W37 = sig1(W[35]) + W[30] + sig0(W[22]) + W21;
-            StepFunction(p_tmp,W36,36); //p37
-            StepFunction(p_tmp,W37,37); //p38
+            // uint32_t W21=0x00008002;//fixed setting
+            // uint32_t W36 = sig1(W[34]) + W[29] + sig0(W21) + W[20];
+            uint32_t W36 = sig1(W[34]) + W[29] + W[20]; //indirect partial matching
             auxiTableW36[i] = sig1(W[34]) + W[29] + W[20];
-            auxiTableW37[i] = sig1(W[35]) + W[30] + sig0(W[22]);
-            for(int j=38;j<44;j++) {
+            StepFunction(p_tmp,W36,36); //p37
+            for(int j=37;j<44;j++) {
                 W[j] = sig1(W[j-2]) + W[j-7] + sig0(W[j-15]) + W[j-16];
-                auxiTableWW[i][j-38];
+                auxiTableWW[i][j-37];
             }
 
-            uint32_t A38=p_tmp[0];
-            int value=(A38&mask_match)>>(32-d_m);
+            uint32_t A37=p_tmp[0];
+            int value=(A37&mask_match);
             hashTable.insert(value,i);
         }
 
         //Backward computation
         for(int i=0; i<(1<<d_b); i++){ //W21
-            W[21]=i;
+            W[21]=(i<<8);
             
             uint32_t p_tmp[8];
             for(int k=0;k<8;k++) p_tmp[k]=p18[i][k];
@@ -310,60 +308,62 @@ void PseudoPreimage_MITM(){
             uint32_t p3[8];
             for(int k=0;k<8;k++) p3[k]=p_tmp[k];
 
-            uint32_t W18=0x01000000;//fixed setting
+            uint32_t W18=0x80000000;//fixed setting
             uint32_t W2 = W18 - sig1(W[16]) - W[11] - sig0(W[3]);
             uint32_t W1 = W[17] - sig1(W[15]) - W[10] - sig0(W2);
+            uint32_t W0 = W[16] - sig1(W[14]) - W[9] - sig0(W1);
             InvStepFunction(p_tmp,W2,2); //p2
             InvStepFunction(p_tmp,W1,1); //p1
+            InvStepFunction(p_tmp,W0,0); //p0
 
-            uint32_t H1=p_tmp[7];
-            int value=(H1&mask_match)>>(32-d_m);
+            uint32_t H0=(p_tmp[7] - sig0(W[21]));
+            int value=(H0&mask_match);
             std::vector<int> all_index_W18 = hashTable.findAll(value);
             for (int index_W18 : all_index_W18) {
-                uint32_t p_tmp_recomputed[8];
-                for(int k=0;k<8;k++) p_tmp_recomputed[k]=auxiTable[index_W18][k]; //p36
+                uint32_t p_tmp_recomputed_0[8];
+                for(int k=0;k<8;k++) p_tmp_recomputed_0[k]=p3[k];
+                uint32_t W18=index_W18<<27;//fixed setting
+                uint32_t W2 = W18 - sig1(W[16]) - W[11] - sig0(W[3]);
+                uint32_t W1 = W[17] - sig1(W[15]) - W[10] - sig0(W2);
+                uint32_t W0 = W[16] - sig1(W[14]) - W[9] - sig0(W1);
+                InvStepFunction(p_tmp_recomputed_0,W2,2); //p2
+                InvStepFunction(p_tmp_recomputed_0,W1,1); //p1
+                InvStepFunction(p_tmp_recomputed_0,W0,0); //p0
 
-                uint32_t W36 = auxiTableW36[index_W18] + sig0(i);
-                uint32_t W37 = auxiTableW37[index_W18] + i;
-                StepFunction(p_tmp_recomputed,W36,36); //p37
-                StepFunction(p_tmp_recomputed,W37,37); //p38
-
-                uint32_t A38_recomputed=p_tmp_recomputed[0];
-                int value_recomputed=(A38_recomputed&mask_match)>>(32-d_m);
+                uint32_t H0_recomputed=(p_tmp_recomputed_0[7] - sig0(W[21]));
+                int value_recomputed=(H0_recomputed&mask_match);
 
                 if(value_recomputed==value) {
-                    ctr_Pr_f++;
+                    ctr_Pr_b++;
 
-                    uint32_t p_tmp[8];
-                    for(int k=0;k<8;k++) p_tmp[k]=p3[k];
-                    uint32_t W18=index_W18<<18;//fixed setting
-                    uint32_t W2 = W18 - sig1(W[16]) - W[11] - sig0(W[3]);
-                    uint32_t W1 = W[17] - sig1(W[15]) - W[10] - sig0(W2);
-                    InvStepFunction(p_tmp,W2,2); //p2
-                    InvStepFunction(p_tmp,W1,1); //p1
-                    W[0] = W[16] - sig1(W[14]) - W[9] - sig0(W[1]);
-                    InvStepFunction(p_tmp,W[0],0);
+                    uint32_t p_tmp_recomputed[8];
+                    for(int k=0;k<8;k++) p_tmp_recomputed[k]=auxiTable[index_W18][k]; //p36
+
+                    uint32_t W36 = auxiTableW36[index_W18];
+                    StepFunction(p_tmp_recomputed,W36,36); //p37
+                    uint32_t A37_recomputed=p_tmp_recomputed[0];
 
                     //Assume Hash==0
-                    for(int j=43;j>38-1;j--) {
-                        InvStepFunction(p_tmp,auxiTableWW[index_W18][j-38],j);
+                    for(int j=43;j>37-1;j--) {
+                        InvStepFunction(p_tmp_recomputed_0,auxiTableWW[index_W18][j-37],j);
                     }
 
-                    //A38[0:1]
-                    uint32_t mask_partial_match=0x00000003;
-                    if((p_tmp[0]&mask_partial_match)==(A38_recomputed&mask_partial_match)) ctr_partial_match++;
+                    //A37[5:7]
+                    uint32_t mask_partial_match=0x000000e0;
+                    if((p_tmp_recomputed_0[7]&mask_partial_match)==(A37_recomputed&mask_partial_match)) ctr_partial_match++;
                 }
             }
         }
     }
 
-    double pr_f=(double)ctr_Pr_f/(double)(N_sample*(1<<(d_f+d_b-d_m)));
-    std::cout<<"    - Re-estimate Pr_f = Pr[correctly expand two steps in forward]: " << std::fixed << std::setprecision(1) << pr_f << std::endl;
+    double pr_f=(double)ctr_Pr_b/(double)(N_sample*(1<<(d_f+d_b-d_m)));
+    std::cout<<"1. re-estimate Pr_b = Pr[correctly expand three steps in backward]: " << std::fixed << std::setprecision(1) << pr_f << std::endl;
 
-    double N_expect=N_sample*(1<<(d_f+d_b-d_m-2))*0.7;
-    std::cout<<"    - N_expect (expected number of partial matching on A38[29:31] and A38[0:1]): N_sample*(1<<(d_f+d_b-d_m-2))*0.7 = " << N_expect << std::endl;
-    std::cout<<"    - N_expriment (true number of partial matching on A38[29:31] and A38[0:1]) = " <<ctr_partial_match << std::endl;
-    std::cout<<"    - N_expriment/N_expect = " << std::fixed << std::setprecision(2) << (double)ctr_partial_match/(double)N_expect << std::endl;
+    double N_expect=N_sample*(1<<(d_f+d_b-d_m-3))*0.5;
+    std::cout<<"2. ratio (N_expriment/N_expect) = " << std::fixed << std::setprecision(2) << (double)ctr_partial_match/(double)N_expect << ">= 1 means the experiment verifies the expected theoretic complexity." << std::endl;
+    std::cout<<"    - where N_expect (expected number of partial matching on A37[0:4, 5:7]): N_sample*(1<<(d_f+d_b-d_m-3))*0.5 = " << N_expect << std::endl;
+    std::cout<<"    - and N_expriment (true number of partial matching on A37[0:4, 5:7]) = " <<ctr_partial_match << std::endl;
+   
 }
 
 void generateRandomUInt32Array(uint32_t *array, size_t size) {

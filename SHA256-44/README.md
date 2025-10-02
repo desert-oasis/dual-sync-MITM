@@ -1,30 +1,53 @@
 # Preimage attack on 44-step SHA-256
 
-A C++ implementation of Alogorithm 3: preimage attack on 44-step SHA-256.
+A C++ implementation of **Algorithm 2** (steps **1–25**) for a preimage attack on 44-step SHA-256.
 
 ## Build
 
-**Minimum C++11.**
+**Requires C++11 or newer.**
+Just run:
 
-Just run `make all`. There are no dependencies.
+```
+make
+```
 
-## Example usage
+## What the program does
 
-### Sample program
+- Implements **steps 1–25** of Algorithm 2 in the paper.
+- Realizes an **8-bit partial matching** on state word **A37**:
+  - **5 bits** from S^{match}: **A37[0:4]**
+  - **3 additional bits** via indirect constraints: **A37[5:7]**
+- When run, the program reports:
+  1. Pr⁡b — the estimated probability that a **3-step backward extension** is correct.
+  2. **ratio** — the ratio between the **experimental count** and the **theoretically expected count** of achieving the above **8-bit partial matching**.
+     Interpretation: **ratio ≥ 1** indicates the experiment **meets or exceeds** the expected theoretic complexity.
 
-Re-estimate Pr_f, which is the probalility of correctly expand two steps in forward with with partial-fixing.
+## Parameters (defaults in code)
 
-Verify the theoretical analysis: if the experimental number of partial matching is basically same with the theoretically expected one. 
+- df=5, db=8, dm=5
+
+- Number of samples: Nsample=2^17=131072
+
+- Expected count formula used in code:
+
+  Nexpect=Nsample×2^{df+db−dm−3}×0.5.
+
+  With the defaults, 2^{5+8−5−3}=2^5=32, hence
+  Nexpect=131072×32×0.5=2,097,152.
+
+## Example
+
+Example run:
 
 ```
 $ ./bin/SHA256
 Number of total samples: 131072
-    - Re-estimate Pr_f = Pr[correctly expand two steps in forward]: 0.7
-    - N_expect (expected number of partial matching on A38[29:31] and A38[0:1]): N_sample*(1<<(d_f+d_b-d_m-2))*0.7 = 2936012.8
-    - N_expriment (true number of partial matching on A38[29:31] and A38[0:1]) = 3276800
-    - N_expriment/N_expect = 1.12
+1. re-estimate Pr_b = Pr[correctly expand three steps in backward]: 0.5
+2. ratio (N_expriment/N_expect) = 1.19>= 1 means the experiment verifies the expected theoretic complexity.
+    - where N_expect (expected number of partial matching on A37[0:4, 5:7]): N_sample*(1<<(d_f+d_b-d_m-3))*0.5 = 2097152.00
+    - and N_expriment (true number of partial matching on A37[0:4, 5:7]) = 2490368
 ```
 
-## ⚠️ DISCLAIMER
+## ⚠️ Disclaimer
 
-This library has been developed for research and learning purposes. It **has not been audited** for security nor compliance with the standard. It is not advised to use it in projects where security is important. Use wide-spread and reliable libraries such as [OpenSSL](https://www.openssl.org/) instead.
+This code is for research and learning purposes. It **has not been audited** for security or standards compliance. Do not use it where security matters. Prefer well-maintained libraries such as OpenSSL.
