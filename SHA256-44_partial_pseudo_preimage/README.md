@@ -33,6 +33,7 @@ make
      In our experiment, there are, on average, ~$2^{4}$ messages such that 25-bit partial target, which indicates the attack find a partial target pseudo-preimage take $O(1/2^4)$ loops, and the advantage is 4 bits. (not 5 bits, due to $Pr_{b} = 0.5$)
 
   - **Ratio** — the ratio between the **experimental count** and the **theoretically expected count** of achieving the above 25-bit partial target.
+     
      Interpretation: **ratio ≥ 1** indicates the experiment **meets or exceeds** the expected.
 
 ## Example
