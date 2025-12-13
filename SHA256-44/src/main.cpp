@@ -243,13 +243,17 @@ void PseudoPreimage_MITM(){
 	//Online phase
     uint32_t N_sample=1<<17; int ctr_Pr_b=0; int ctr_partial_match=0;
     std::cout<<"Number of total samples: " << N_sample << std::endl;
-    //For external variables of IS: W23
+    //For external variables of IS: W32
     uint32_t W32;
     for (W32 = 0; W32 < N_sample; ++W32)
     {   
         uint32_t W[44];
         W[32]=W32;
-        W[19]=0,W[17]=0,W[16]=0,W[15]=0,W[14]=0,W[13]=0;//arbitrary value, set zero for simplicity
+        
+        uint32_t rands[6];
+        generateRandomUInt32Array(rands,6);
+        W[19]=rands[0],W[17]=rands[1],W[16]=rands[2];
+        W[15]=rands[3],W[14]=rands[4],W[13]=rands[5];
 
         MultiHashTable<int, int> hashTable((1<<d_f));
         std::vector<std::vector<uint32_t>> auxiTable((1<<d_f), std::vector<uint32_t>(8, 0));
@@ -343,14 +347,14 @@ void PseudoPreimage_MITM(){
                     StepFunction(p_tmp_recomputed,W36,36); //p37
                     uint32_t A37_recomputed=p_tmp_recomputed[0];
 
-                    //Assume Hash==0
                     for(int j=43;j>37-1;j--) {
                         InvStepFunction(p_tmp_recomputed_0,auxiTableWW[index_W18][j-37],j);
                     }
 
                     //A37[5:7]
                     uint32_t mask_partial_match=0x000000e0;
-                    if((p_tmp_recomputed_0[7]&mask_partial_match)==(A37_recomputed&mask_partial_match)) ctr_partial_match++;
+                    //Assume Hash==0
+                    if(( (0 - (p_tmp_recomputed_0[0]-sig0(W[21]))) &mask_partial_match)==(A37_recomputed&mask_partial_match)) ctr_partial_match++;
                 }
             }
         }

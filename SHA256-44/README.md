@@ -43,9 +43,9 @@ Example run:
 $ ./bin/SHA256
 Number of total samples: 131072
 1. re-estimate Pr_b = Pr[correctly expand three steps in backward]: 0.5
-2. ratio (N_expriment/N_expect) = 1.19>= 1 means the experiment verifies the expected theoretic complexity.
+2. ratio (N_expriment/N_expect) = 1.04>= 1 means the experiment verifies the expected theoretic complexity.
     - where N_expect (expected number of partial matching on A37[0:4, 5:7]): N_sample*(1<<(d_f+d_b-d_m-3))*0.5 = 2097152.00
-    - and N_expriment (true number of partial matching on A37[0:4, 5:7]) = 2490368
+    - and N_expriment (true number of partial matching on A37[0:4, 5:7]) = 2183507
 ```
 
 ## ⚠️ Disclaimer
