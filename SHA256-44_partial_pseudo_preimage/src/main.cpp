@@ -259,8 +259,8 @@ static uint64_t OneTrial_PseudoPreimage_MITM(const PrecompIS& is, int size_parti
     const int d_f = is.d_f, d_b = is.d_b, d_m = is.d_m;
     (void)d_m;
 
-    uint32_t mask_forward  = 0xf8000000; // unused currently
-    uint32_t mask_backward = 0x0000ff00; // unused currently
+    uint32_t mask_forward  = 0xf8000000; //W25, {27:31}
+    uint32_t mask_backward = 0x0000ff00; //W28, {8:15}
     uint32_t mask_match    = 0x0000001f; // A44, {0:4}
     (void)mask_forward; (void)mask_backward;
 
