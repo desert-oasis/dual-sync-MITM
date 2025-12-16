@@ -50,6 +50,24 @@ Target: find a message such that 32-bit partial target, total #trials= 10:
 Trials:          10
 Median cost (#loops):     ≈ 2^28.02
 Total time:      510.70 s
+
+$ ./bin/SHA256-44_partial_target
+Target: find a message such that 40-bit partial target, total #trials= 10:
+  - trial 1/10: #loops ≈ 2^37.50
+  - trial 2/10: #loops ≈ 2^31.76
+  - trial 3/10: #loops ≈ 2^37.16
+  - trial 4/10: #loops ≈ 2^35.34
+  - trial 5/10: #loops ≈ 2^36.66
+  - trial 6/10: #loops ≈ 2^33.37
+  - trial 7/10: #loops ≈ 2^35.05
+  - trial 8/10: #loops ≈ 2^35.36
+  - trial 9/10: #loops ≈ 2^35.40
+  - trial 10/10: #loops ≈ 2^37.40
+
+===== Summary =====
+Trials:          10
+Median cost (#loops):     ≈ 2^35.38
+Total time:      143813.12 s
 ```
 
 ## ⚠️ Disclaimer
