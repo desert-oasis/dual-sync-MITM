@@ -20,13 +20,13 @@ make
   - **$t-32$ additional bits**: B44[0:$t-32$]
 - **Parameters (defauts in code)**
   - MitM attacks with $d_f=5, d_b=8, d_m=5$, and backward probablity that backward 3-step extension is $Pr_{b} = 0.5$.
-  - total loops: $2^{n} = 2^{n'} \times (2^{d_f} + 2^{d_b} + 2^{d_f+d_b-d_m})$, where external loop is $2^{n'}$ and internal loop is $2^{d_f} + 2^{d_b} + + 2^{d_f+d_b-d_m}$. And, the process tests $Pr_{b} \times 2^{n'+d_f+d_b}$ message, that is it has an advantage of about $Pr_{b} \times \min(d_f,d_b,d_m)=4$ (not 5 bits, due to $Pr_{b} = 0.5$).
+  - total loops: $2^{n} = 2^{n'} \times (2^{d_f} + 2^{d_b} + 2^{d_f+d_b-d_m})$, where external loop is $2^{n'}$ and internal loop is $2^{d_f} + 2^{d_b} + + 2^{d_f+d_b-d_m}$. And, the process tests $Pr_{b} \times 2^{n'+d_f+d_b}$ messages with complexity $2^n$, that is, it has an advantage of about $Pr_{b} \times 2^{\min(d_f,d_b,d_m)}=2^4$.
 - When run, the program reports:
 
   - **Expriment Result** — the experimental number of loops (#loops) to find a message such that $t$-bit partial target set to zeros, that is the partial matching on A44[0:31] and B[32:$t$].
-  - In our experiment of MitM attack, it takes, on average, $2^{28.02}$ loops to find messages such that 32-bit partial target, as expected.
-  - In generic attack, after $2^{t}$ tests, there is one message such that $t$-bit partial target with probability about 0.6, where $t=32$ or $40$.
-  -  That is, the attack has the advantage is $4 \approx (32-28.02)$ bits, which verifies the theoretic analysis.
+  - In our experiment, it takes, on average, $2^{28.02}$ loops to find a message such that 32-bit partial target. The result shows our attack has the advantage of $2^{32-28.02} = 2^{3.98}$ bits, which matchs the expected advantage $2^4$.
+  - In addition, for 40-bit partial target, it takes, on average, $2^{35.38}$ loops to find a message such that 40-bit partial target. The result shows our attack complexity gain $2^{40-35.38} = 2^{4.62}$ matchs and is slightly better than the expected advantage $2^4$.
+  - PS: In generic attack, after $2^{t}$ tests, there is one message such that $t$-bit partial target with probability about 0.6.
 
 ## Example
 

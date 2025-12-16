@@ -31,7 +31,6 @@ int main(int argc, char ** argv) {
     int num_trials = 10;
     int size_partial_target = 32;
     
-    // int num_trials = 5;
     // int size_partial_target = 40;
 
     std::cout << "Target: find a message such that "
